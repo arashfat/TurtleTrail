@@ -60,6 +60,7 @@ data class Step(
     val name: String,
     @SerializedName("way_points")
     val wayPoints: List<Long>,
+    var isShown: Boolean = false
 )
 
 data class Summary(

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -180,6 +181,12 @@ class MainActivity : AppCompatActivity() {
                     )
                     lastIndex = index
 
+                    if (step?.isShown == false) {
+                        data.properties.segments.getOrNull(0)?.steps?.find { it == step }?.isShown = true
+                        binding.tvStep.text = step.instruction
+
+                    }
+
                     println("Current instruction: ${step?.instruction}")
                     println("Current instruction: $lastIndex")
                 }
@@ -198,6 +205,8 @@ class MainActivity : AppCompatActivity() {
             summaryFragment.setData(summary) {
                 mMap?.scaleX = 2f
                 isRouting = true
+                binding.edSearch.visibility = View.GONE
+                binding.layoutRouting.visibility = View.VISIBLE
             }
             summaryFragment.show(supportFragmentManager, "summary")
         }

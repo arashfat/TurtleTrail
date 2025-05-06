@@ -8,8 +8,6 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-private var isCalculating = true
-
 object RoutingHelper {
 
     fun findClosestStep(

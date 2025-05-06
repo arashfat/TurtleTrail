@@ -23,8 +23,41 @@
         android:layout_marginEnd="10dp"
         android:paddingEnd="10dp"
         android:textDirection="rtl"
+        android:visibility="visible"
         android:background="@drawable/bg_search_text"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_routing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/step_bg"
+        android:padding="12dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <TextView
+            android:id="@+id/tv_step"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:layout_marginEnd="10dp"
+            app:layout_constraintEnd_toStartOf="@+id/iv_step_icon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="test test test test test" />
+
+        <ImageView
+            android:id="@+id/iv_step_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/ic_arrow_left_turn"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
         android:id="@+id/main_container"
