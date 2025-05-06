@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import androidx.activity.viewModels
@@ -14,10 +12,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.osm.R
 import com.example.osm.databinding.ActivityMainBinding
+import com.example.osm.model.RoutingResultModel
 import com.example.osm.model.Summary
 import com.example.osm.ui.mapUtils.getBoundingBox
 import com.example.osm.ui.searcResult.SearchResultFragment
 import com.example.osm.ui.summary.SummaryFragment
+import com.example.osm.utils.RoutingHelper.findClosestStep
 import dagger.hilt.android.AndroidEntryPoint
 import org.osmdroid.api.IMapController
 import org.osmdroid.bonuspack.routing.Road
@@ -45,7 +45,11 @@ class MainActivity : AppCompatActivity() {
     private val searchResultFragment = SearchResultFragment()
     private var liveLocation: Location? = null
     private var isCentring = true
+
+    //Routing Data
     private var isRouting = false
+    private var lastIndex = 0
+    private var rout: RoutingResultModel? = null
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +115,7 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.route.observe(this) {
             isCentring = false
+            rout = it
             it.features.getOrNull(0)?.geometry?.coordinates?.let { points ->
                 val geoPoints = arrayListOf<GeoPoint>()
                 for (point in points) {
@@ -165,6 +170,19 @@ class MainActivity : AppCompatActivity() {
                 mMap?.controller?.animateTo(
                     GeoPoint(location.latitude, location.longitude), 18.0, 1000, -location.bearing
                 )
+
+                rout?.features?.firstOrNull()?.let { data ->
+
+
+                    val (step, index) = findClosestStep(
+                        location, data.geometry.coordinates,
+                        data.properties.segments.get(0).steps, lastIndex
+                    )
+                    lastIndex = index
+
+                    println("Current instruction: ${step?.instruction}")
+                    println("Current instruction: $lastIndex")
+                }
             }
 
             mMyLocationOverlay =

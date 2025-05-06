@@ -36,6 +36,7 @@ class SummaryFragment: BottomSheetDialogFragment() {
 
         binding.btnStart.setOnClickListener {
             onClick?.invoke()
+            dismiss()
         }
     }
 }
