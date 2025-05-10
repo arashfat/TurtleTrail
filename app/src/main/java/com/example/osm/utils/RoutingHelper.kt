@@ -1,10 +1,13 @@
 package com.example.osm.utils
 
 import android.location.Location
+import com.example.osm.R
 import com.example.osm.model.Step
+import com.example.osm.model.enum.ManeuverType.*
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -58,5 +61,53 @@ object RoutingHelper {
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return R * c
+    }
+
+    fun distanceLeftInStep(
+        geometry: List<List<Double>>,
+        step: Step,
+        currentIndex: Int
+    ): Double {
+        val from = maxOf(step.wayPoints.first(), currentIndex.toLong())
+        val to = step.wayPoints.last()
+
+        if (from >= to) return 0.0
+
+        var total = 0.0
+        for (i in from until to) {
+            total += haversine(geometry[i.toInt()], geometry[i.toInt() + 1])
+        }
+
+        return total
+    }
+
+    fun getManeuverImage(type: Int): Int {
+        return when(type) {
+            TURN_LEFT.code, SHARP_LEFT.code -> R.drawable.ic_arrow_left_turn
+            TURN_RIGHT.code, SHARP_RIGHT.code -> R.drawable.ic_arrow_right_turn
+            SLIGHT_LEFT.code, KEEP_LEFT.code -> R.drawable.ic_arrow_slight_left
+            SLIGHT_RIGHT.code, KEEP_RIGHT.code -> R.drawable.ic_arrow_slight_right
+            U_TURN.code -> R.drawable.ic_arrow_u_turn_left
+            ARRIVE.code -> R.drawable.ic_arrow_destination
+            else -> R.drawable.ic_arrow_straight
+
+        }
+    }
+
+    fun formatDistance(distanceMeters: Double): String {
+        return when {
+            distanceMeters >= 1000 -> {
+                val km = distanceMeters / 1000.0
+                String.format("%.1f km", km)
+            }
+            distanceMeters >= 100 -> {
+                val rounded = (distanceMeters / 50).roundToInt() * 50
+                "$rounded m"
+            }
+            else -> {
+                val rounded = (distanceMeters / 20).roundToInt() * 20
+                "$rounded m"
+            }
+        }
     }
 }

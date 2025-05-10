@@ -18,8 +18,12 @@ import com.example.osm.model.Summary
 import com.example.osm.ui.mapUtils.getBoundingBox
 import com.example.osm.ui.searcResult.SearchResultFragment
 import com.example.osm.ui.summary.SummaryFragment
+import com.example.osm.utils.RoutingHelper.distanceLeftInStep
 import com.example.osm.utils.RoutingHelper.findClosestStep
+import com.example.osm.utils.RoutingHelper.formatDistance
+import com.example.osm.utils.RoutingHelper.getManeuverImage
 import dagger.hilt.android.AndroidEntryPoint
+import okhttp3.internal.concurrent.formatDuration
 import org.osmdroid.api.IMapController
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
@@ -177,18 +181,21 @@ class MainActivity : AppCompatActivity() {
 
                     val (step, index) = findClosestStep(
                         location, data.geometry.coordinates,
-                        data.properties.segments.get(0).steps, lastIndex
+                        data.properties.segments[0].steps, lastIndex
                     )
                     lastIndex = index
 
                     if (step?.isShown == false) {
                         data.properties.segments.getOrNull(0)?.steps?.find { it == step }?.isShown = true
                         binding.tvStep.text = step.instruction
-
+                        step.type?.let {
+                            binding.ivStepIcon.setImageResource(getManeuverImage(it.toInt()))
+                        }
                     }
-
-                    println("Current instruction: ${step?.instruction}")
-                    println("Current instruction: $lastIndex")
+                    step?.let {
+                        val remaining = distanceLeftInStep(data.geometry.coordinates, step, lastIndex)
+                        binding.tvDistance.text = formatDistance(remaining)
+                    }
                 }
             }
 
