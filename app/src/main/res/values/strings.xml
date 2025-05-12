@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">OSM</string>
+    <string name="speed">%1$dkm</string>
 </resources>

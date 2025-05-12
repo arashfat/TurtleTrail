@@ -11,7 +11,7 @@ import javax.inject.Inject
 class SearchRepository @Inject constructor(
     private val searchService: SearchService
 ) : BaseApiResponse() {
-    suspend fun getPlaces(query: String): Flow<NetworkResult<List<SearchResultModel>>> {
+    fun getPlaces(query: String): Flow<NetworkResult<List<SearchResultModel>>> {
         return flow {
             emit(safeApiCall { searchService.searchPlaces(query) })
         }

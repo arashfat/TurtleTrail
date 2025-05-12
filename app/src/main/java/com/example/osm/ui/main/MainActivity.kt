@@ -24,6 +24,8 @@ import com.example.osm.utils.RoutingHelper.distanceLeftInStep
 import com.example.osm.utils.RoutingHelper.findClosestStep
 import com.example.osm.utils.RoutingHelper.formatDistance
 import com.example.osm.utils.RoutingHelper.getManeuverImage
+import com.example.osm.utils.dpToPx
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.hilt.android.AndroidEntryPoint
 import okhttp3.internal.concurrent.formatDuration
 import org.osmdroid.api.IMapController
@@ -73,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         collectors()
+        setupBottomSheet()
         mMap = binding.osmMap
         mMap?.controller?.setZoom(16.0)
 
@@ -99,7 +102,8 @@ class MainActivity : AppCompatActivity() {
         }))
 
         binding.edSearch.setOnClickListener {
-            supportFragmentManager.beginTransaction().replace(binding.mainContainer.id, SearchResultFragment(), "search").commit()
+            supportFragmentManager.beginTransaction()
+                .replace(binding.mainContainer.id, SearchResultFragment(), "search").commit()
         }
     }
 
@@ -148,10 +152,11 @@ class MainActivity : AppCompatActivity() {
                 it.features.getOrNull(0)?.properties?.segments?.getOrNull(0)?.steps?.let { steps ->
                     for (step in steps) {
                         val marker = Marker(mMap)
-                        it.features[0].geometry.coordinates.getOrNull(step.wayPoints[1].toInt())?.let { position ->
-                            marker.position = GeoPoint(position.get(1), position.get(0))
-                            mMap?.overlays?.add(marker)
-                        }
+                        it.features[0].geometry.coordinates.getOrNull(step.wayPoints[1].toInt())
+                            ?.let { position ->
+                                marker.position = GeoPoint(position.get(1), position.get(0))
+                                mMap?.overlays?.add(marker)
+                            }
 
                     }
                 }
@@ -178,7 +183,10 @@ class MainActivity : AppCompatActivity() {
                 mMap?.controller?.animateTo(
                     GeoPoint(location.latitude, location.longitude), 18.0, 1000, -location.bearing
                 )
-
+                location.speed?.let {
+                    binding.tvSpeed.visibility = View.VISIBLE
+                    binding.tvSpeed.text = getString(R.string.speed, it.toInt())
+                }
                 rout?.features?.firstOrNull()?.let { data ->
 
 
@@ -236,9 +244,9 @@ class MainActivity : AppCompatActivity() {
 
                 rout?.let {
                     routingViewModel.setData(it)
-                    RoutingFragment().show(
-                        supportFragmentManager, ""
-                    )
+                    supportFragmentManager.beginTransaction().replace(
+                        R.id.bottom_sheet_container, RoutingFragment()
+                    ).commit()
                 }
             }
             summaryFragment.show(supportFragmentManager, "summary")
@@ -271,5 +279,10 @@ class MainActivity : AppCompatActivity() {
                 viewModel.requestLocationUpdate()
             }
         }
+    }
+
+    private fun setupBottomSheet() {
+        val behavior = BottomSheetBehavior.from(binding.layoutBottom)
+        behavior.setPeekHeight(this.dpToPx(115), false)
     }
 }

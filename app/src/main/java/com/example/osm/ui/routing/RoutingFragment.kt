@@ -4,16 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -21,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
@@ -29,22 +33,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.example.osm.model.Step
 import com.example.osm.ui.mapUtils.convertSecondToText
-import com.example.osm.ui.mapUtils.formatDistanceText
+import com.example.osm.utils.RoutingHelper
 import com.example.osm.utils.RoutingHelper.formatDistance
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class RoutingFragment: BottomSheetDialogFragment() {
+class RoutingFragment: Fragment() {
 
     private val viewModel: RoutingViewModel by activityViewModels()
 
@@ -60,35 +64,22 @@ class RoutingFragment: BottomSheetDialogFragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        view.post {
-            val dialog = dialog as? BottomSheetDialog
-            val bottomSheet = dialog?.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
-
-            bottomSheet?.let {
-                val behavior = BottomSheetBehavior.from(it)
-                val peekHeight = resources.displayMetrics.density * 500 // 150dp to px
-                behavior.peekHeight = peekHeight.toInt()
-                behavior.isHideable = false
-                behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            }
-        }
-    }
-
     @Composable
     private fun MainContent() {
 
         val currentState = viewModel.updateRoutingState.observeAsState()
+        val steps = arrayListOf<Step>()
 
         viewModel.route?.let {
             it.features.getOrNull(0)?.properties?.segments?.getOrNull(0)?.let { summary ->
+                steps.addAll(summary.steps)
                 val eta = calculateETA(summary.duration.toInt())
                 currentState.value?.let { step ->
                     val distanceLeft = calculateDistanceLeft(summary.distance, step.distance)
                     val durationLeft = calculateDurationLeft(summary.duration, step.duration)
 
-                    NavigationInfoCard(
-                        durationLeft, distanceLeft, eta
+                    NavigationInfoScreen(
+                        durationLeft, distanceLeft, eta, steps
                     ) {
 
                     }
@@ -98,12 +89,12 @@ class RoutingFragment: BottomSheetDialogFragment() {
 
     }
 
-
     @Composable
-    fun NavigationInfoCard(
+    fun NavigationInfoScreen(
         time: String,
         distance: String,
         eta: String,
+        steps: List<Step>,
         onClose: () -> Unit
     ) {
         Card(
@@ -163,17 +154,66 @@ class RoutingFragment: BottomSheetDialogFragment() {
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
+                Spacer(modifier = Modifier.padding(4.dp))
+                NavigationSteps(steps)
             }
+        }
+    }
+
+    @Composable
+    private fun NavigationSteps(steps: List<Step>) {
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(steps.size) { index ->
+                NavigationStepCard(
+                    steps[index]
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun NavigationStepCard(step: Step) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = step.instruction,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Image(
+                    painter = painterResource(
+                        RoutingHelper.getManeuverImage(step.type.toInt())
+                    ),
+                    contentDescription = "Icon",
+                    modifier = Modifier
+                        .size(40.dp).background(Color.Gray, shape = RoundedCornerShape(10.dp))
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = formatDistance(step.distance),
+                modifier = Modifier.align(Alignment.Start),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 
     @Preview
     @Composable
     private fun Preview() {
-        NavigationInfoCard(
+        NavigationInfoScreen(
             "1h59m",
             "1.2km",
-            "11:52"
+            "11:52",
+            arrayListOf(
+                Step(92.0, 1200.0, 1, "turn left onto", "street name", arrayListOf())
+            )
         ) { }
     }
 
