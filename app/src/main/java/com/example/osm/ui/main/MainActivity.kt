@@ -282,7 +282,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomSheet() {
-        val behavior = BottomSheetBehavior.from(binding.layoutBottom)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheetContainer)
         behavior.setPeekHeight(this.dpToPx(115), false)
     }
 }
