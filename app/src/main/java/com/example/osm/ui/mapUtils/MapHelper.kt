@@ -38,5 +38,9 @@ fun convertSecondToText(second: Int): String {
     val hours = second / 3600
     val minutes = (second % 3600) / 60
 
-    return "$hours hr $minutes min"
+    return if (hours > 0) {
+        "$hours hr $minutes min"
+    } else {
+        "$minutes min"
+    }
 }

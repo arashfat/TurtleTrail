@@ -16,6 +16,8 @@ import com.example.osm.databinding.ActivityMainBinding
 import com.example.osm.model.RoutingResultModel
 import com.example.osm.model.Summary
 import com.example.osm.ui.mapUtils.getBoundingBox
+import com.example.osm.ui.routing.RoutingFragment
+import com.example.osm.ui.routing.RoutingViewModel
 import com.example.osm.ui.searcResult.SearchResultFragment
 import com.example.osm.ui.summary.SummaryFragment
 import com.example.osm.utils.RoutingHelper.distanceLeftInStep
@@ -46,7 +48,10 @@ class MainActivity : AppCompatActivity() {
     private var controller: IMapController? = null
     private var mMyLocationOverlay: MyLocationNewOverlay? = null
     private lateinit var binding: ActivityMainBinding
+
     private val viewModel: MainViewModel by viewModels()
+    private val routingViewModel: RoutingViewModel by viewModels()
+
     private val searchResultFragment = SearchResultFragment()
     private var liveLocation: Location? = null
     private var isCentring = true
@@ -141,8 +146,6 @@ class MainActivity : AppCompatActivity() {
                 showSummary(it.features.getOrNull(0)?.properties?.summary)
 
                 it.features.getOrNull(0)?.properties?.segments?.getOrNull(0)?.steps?.let { steps ->
-                    val nodeIcon = ContextCompat.getDrawable(this@MainActivity, R.drawable.marker_node)
-
                     for (step in steps) {
                         val marker = Marker(mMap)
                         it.features[0].geometry.coordinates.getOrNull(step.wayPoints[1].toInt())?.let { position ->
@@ -179,22 +182,38 @@ class MainActivity : AppCompatActivity() {
                 rout?.features?.firstOrNull()?.let { data ->
 
 
-                    val (step, index) = findClosestStep(
+                    val (stepIndex, index) = findClosestStep(
                         location, data.geometry.coordinates,
                         data.properties.segments[0].steps, lastIndex
                     )
-                    lastIndex = index
+                    val allSteps = data.properties.segments.getOrNull(0)?.steps ?: arrayListOf()
 
-                    if (step?.isShown == false) {
-                        data.properties.segments.getOrNull(0)?.steps?.find { it == step }?.isShown = true
-                        binding.tvStep.text = step.instruction
-                        step.type?.let {
-                            binding.ivStepIcon.setImageResource(getManeuverImage(it.toInt()))
+                    if (allSteps.isNotEmpty()) {
+                        val step = allSteps[stepIndex]
+
+                        lastIndex = index
+
+                        if (!step.isShown) {
+
+                            //check if step is passed update routing state
+                            if (stepIndex > 0) {
+                                routingViewModel.updateRoutingState(
+                                    allSteps[stepIndex - 1]
+                                )
+                            }
+
+                            data.properties.segments.getOrNull(0)?.steps?.find { it == step }?.isShown =
+                                true
+                            binding.tvStep.text = step.instruction
+                            step.type.let {
+                                binding.ivStepIcon.setImageResource(getManeuverImage(it.toInt()))
+                            }
                         }
-                    }
-                    step?.let {
-                        val remaining = distanceLeftInStep(data.geometry.coordinates, step, lastIndex)
-                        binding.tvDistance.text = formatDistance(remaining)
+                        step?.let {
+                            val remaining =
+                                distanceLeftInStep(data.geometry.coordinates, step, lastIndex)
+                            binding.tvDistance.text = formatDistance(remaining)
+                        }
                     }
                 }
             }
@@ -214,6 +233,13 @@ class MainActivity : AppCompatActivity() {
                 isRouting = true
                 binding.edSearch.visibility = View.GONE
                 binding.layoutRouting.visibility = View.VISIBLE
+
+                rout?.let {
+                    routingViewModel.setData(it)
+                    RoutingFragment().show(
+                        supportFragmentManager, ""
+                    )
+                }
             }
             summaryFragment.show(supportFragmentManager, "summary")
         }

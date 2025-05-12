@@ -18,12 +18,12 @@ object RoutingHelper {
         geometry: List<List<Double>>,
         steps: List<Step>,
         lastMatchedIndex: Int // Start from the last known location
-    ): Pair<Step?, Int> {
-        var closestStep: Step? = null
+    ): Pair<Int, Int> {
+        var stepIndex = 0
         var minDistance = Double.MAX_VALUE
         var newMatchedIndex = lastMatchedIndex
 
-        for (step in steps) {
+        for ((index, step) in steps.withIndex()) {
             val from = step.wayPoints.first()
             val to = step.wayPoints.last()
 
@@ -41,13 +41,13 @@ object RoutingHelper {
 
                 if (distance < minDistance) {
                     minDistance = distance
-                    closestStep = step
+                    stepIndex = index
                     newMatchedIndex = i.toInt()
                 }
             }
         }
 
-        return Pair(closestStep, newMatchedIndex)
+        return Pair(stepIndex, newMatchedIndex)
     }
 
     private fun haversine(coord1: List<Double>, coord2: List<Double>): Double {
