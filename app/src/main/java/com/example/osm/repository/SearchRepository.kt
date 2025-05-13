@@ -1,6 +1,8 @@
 package com.example.osm.repository
 
 import com.example.osm.data.SearchService
+import com.example.osm.model.Point
+import com.example.osm.model.ReverseGeoResponse
 import com.example.osm.model.SearchResultModel
 import com.example.osm.network.BaseApiResponse
 import com.example.osm.network.NetworkResult
@@ -14,6 +16,14 @@ class SearchRepository @Inject constructor(
     fun getPlaces(query: String): Flow<NetworkResult<List<SearchResultModel>>> {
         return flow {
             emit(safeApiCall { searchService.searchPlaces(query) })
+        }
+    }
+
+    fun reverseGeoCoding(point: Point): Flow<NetworkResult<ReverseGeoResponse>> {
+        return flow {
+            emit(safeApiCall { searchService.reverseGeoCoding(
+                point.lat, point.lng
+            ) })
         }
     }
 }

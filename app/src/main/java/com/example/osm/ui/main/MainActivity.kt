@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.osm.R
 import com.example.osm.databinding.ActivityMainBinding
+import com.example.osm.model.Point
 import com.example.osm.model.RoutingResultModel
 import com.example.osm.model.Summary
 import com.example.osm.ui.mapUtils.getBoundingBox
@@ -25,9 +26,9 @@ import com.example.osm.utils.RoutingHelper.findClosestStep
 import com.example.osm.utils.RoutingHelper.formatDistance
 import com.example.osm.utils.RoutingHelper.getManeuverImage
 import com.example.osm.utils.dpToPx
+import com.example.osm.utils.marker.CustomInfoMarker
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.hilt.android.AndroidEntryPoint
-import okhttp3.internal.concurrent.formatDuration
 import org.osmdroid.api.IMapController
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
@@ -95,7 +96,15 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
 
-            override fun longPressHelper(p: GeoPoint?): Boolean {
+            override fun longPressHelper(point: GeoPoint?): Boolean {
+                point?.let {
+                    viewModel.reverseGeoPoint(
+                        Point(
+                            point.latitude,
+                            point.longitude
+                        )
+                    )
+                }
                 return false
             }
 
@@ -166,8 +175,6 @@ class MainActivity : AppCompatActivity() {
         viewModel.sdkRoute.observe(this) {
             mMap?.overlays?.add(RoadManager.buildRoadOverlay(it))
             mMap?.zoomToBoundingBox(it?.mBoundingBox, true, 100)
-
-
         }
 
         viewModel.locationUpdate.observe(this) { location ->
@@ -231,6 +238,21 @@ class MainActivity : AppCompatActivity() {
             mMyLocationOverlay?.enableMyLocation()
             mMap?.overlays?.add(mMyLocationOverlay)
         }
+
+        viewModel.reverseGeoResult.observe(this) {
+            mMap?.let { mMap ->
+                val marker = Marker(mMap).apply {
+                    position = GeoPoint(it.lat, it.lon)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    subDescription = it.name
+                    infoWindow = CustomInfoMarker(mMap) {
+
+                    }
+                }
+                mMap.overlays.add(marker)
+                marker.showInfoWindow()
+            }
+        }
     }
 
     private fun showSummary(summary: Summary?) {
@@ -282,7 +304,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomSheet() {
-        val behavior = BottomSheetBehavior.from(binding.bottomSheetContainer)
-        behavior.setPeekHeight(this.dpToPx(115), false)
+        val behavior = BottomSheetBehavior.from(binding.layoutBottomSheetBehavior)
+        behavior.setPeekHeight(this.dpToPx(200), false)
     }
 }

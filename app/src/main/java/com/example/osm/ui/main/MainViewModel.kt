@@ -1,11 +1,12 @@
 package com.example.osm.ui.main
 
-import android.content.Context
 import android.location.Location
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.osm.model.Point
+import com.example.osm.model.ReverseGeoResponse
 import com.example.osm.model.RoutingResultModel
 import com.example.osm.model.SearchResultModel
 import com.example.osm.network.NetworkResult
@@ -13,13 +14,9 @@ import com.example.osm.repository.LocationRepository
 import com.example.osm.repository.RoutingRepository
 import com.example.osm.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.Road
-import org.osmdroid.util.GeoPoint
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +30,9 @@ class MainViewModel @Inject constructor(
 
     private val _route = MutableLiveData<RoutingResultModel>()
     val route: LiveData<RoutingResultModel> = _route
+
+    private val _reverseGeoResult = MutableLiveData<ReverseGeoResponse>()
+    val reverseGeoResult: LiveData<ReverseGeoResponse> = _reverseGeoResult
 
     private val _sdkRoute = MutableLiveData<Road>()
     val sdkRoute: LiveData<Road> = _sdkRoute
@@ -61,14 +61,11 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun sdkRouting(wayPoints: ArrayList<GeoPoint>, context: Context) = viewModelScope.launch {
-        var road: Road? = null
-        withContext(Dispatchers.IO) {
-            val roadManager = OSRMRoadManager(context, "")
-            road = roadManager.getRoad(wayPoints)
-        }
-         road?.let {
-            _sdkRoute.value = it
+    fun reverseGeoPoint(point: Point) = viewModelScope.launch {
+        searchRepository.reverseGeoCoding(point).collectLatest {
+            if (it is NetworkResult.Success) {
+                it.data?.let { address -> _reverseGeoResult.value = address }
+            }
         }
     }
 

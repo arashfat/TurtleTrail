@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/bg_search_text"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/address_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Address here"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:maxLength="25"
+        android:ellipsize="end"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/route_button"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:background="@color/gray"
+        android:textColor="@color/white"
+        android:text="Route" />
+</LinearLayout>

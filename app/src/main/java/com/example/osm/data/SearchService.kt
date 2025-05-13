@@ -1,5 +1,6 @@
 package com.example.osm.data
 
+import com.example.osm.model.ReverseGeoResponse
 import com.example.osm.model.SearchResultModel
 import retrofit2.Response
 import retrofit2.http.GET
@@ -13,4 +14,11 @@ interface SearchService {
         @Query("countrycodes") code: String = "ir",
         @Query("limit") limit: Int = 10
     ): Response<List<SearchResultModel>>
+
+    @GET("reverse.php")
+    suspend fun reverseGeoCoding(
+        @Query("lat") latitude: Double,
+        @Query("lon") longitude: Double,
+        @Query("format") f: String = "jsonv2"
+        ): Response<ReverseGeoResponse>
 }
