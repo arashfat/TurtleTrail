@@ -2,8 +2,10 @@ package com.example.osm.utils
 
 import android.location.Location
 import com.example.osm.R
+import com.example.osm.model.Point
 import com.example.osm.model.Step
 import com.example.osm.model.enum.ManeuverType.*
+import org.osmdroid.views.MapView
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -109,5 +111,14 @@ object RoutingHelper {
                 "$rounded m"
             }
         }
+    }
+
+    fun createBondingBox(map: MapView): List<Double> {
+        val boundingBox = map.boundingBox
+
+        val topLeft = Point(boundingBox.latNorth, boundingBox.lonWest)
+        val bottomRight = Point(boundingBox.latSouth, boundingBox.lonEast)
+
+        return arrayListOf(topLeft.lat, topLeft.lng, bottomRight.lat, bottomRight.lng)
     }
 }

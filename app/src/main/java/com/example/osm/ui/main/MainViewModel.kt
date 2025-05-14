@@ -41,8 +41,8 @@ class MainViewModel @Inject constructor(
     val locationUpdate: LiveData<Location> get() = _locationUpdate
 
     val searchOnClick = MutableLiveData<SearchResultModel>()
-    fun searchPlaces(search: String) = viewModelScope.launch {
-        val result = searchRepository.getPlaces(search)
+    fun searchPlaces(search: String, boundingBox: List<Double>? = null) = viewModelScope.launch {
+        val result = searchRepository.getPlaces(search, boundingBox)
          result.collect {
              if (it is NetworkResult.Success) {
                  it.data?.let { data ->

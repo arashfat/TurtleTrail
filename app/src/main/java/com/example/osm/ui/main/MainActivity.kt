@@ -11,16 +11,22 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.osm.R
 import com.example.osm.databinding.ActivityMainBinding
 import com.example.osm.model.Point
 import com.example.osm.model.RoutingResultModel
 import com.example.osm.model.Summary
+import com.example.osm.ui.main.adapter.SearchPlaceAdapter
+import com.example.osm.ui.main.adapter.SearchPlaceModel
 import com.example.osm.ui.mapUtils.getBoundingBox
 import com.example.osm.ui.routing.RoutingFragment
 import com.example.osm.ui.routing.RoutingViewModel
 import com.example.osm.ui.searcResult.SearchResultFragment
 import com.example.osm.ui.summary.SummaryFragment
+import com.example.osm.utils.Constants
+import com.example.osm.utils.RoutingHelper
 import com.example.osm.utils.RoutingHelper.distanceLeftInStep
 import com.example.osm.utils.RoutingHelper.findClosestStep
 import com.example.osm.utils.RoutingHelper.formatDistance
@@ -29,7 +35,6 @@ import com.example.osm.utils.dpToPx
 import com.example.osm.utils.marker.CustomInfoMarker
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.hilt.android.AndroidEntryPoint
-import org.osmdroid.api.IMapController
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.config.Configuration
@@ -44,18 +49,15 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
-
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private var mMap: MapView? = null
-    private var controller: IMapController? = null
     private var mMyLocationOverlay: MyLocationNewOverlay? = null
     private lateinit var binding: ActivityMainBinding
 
     private val viewModel: MainViewModel by viewModels()
     private val routingViewModel: RoutingViewModel by viewModels()
 
-    private val searchResultFragment = SearchResultFragment()
     private var liveLocation: Location? = null
     private var isCentring = true
 
@@ -63,14 +65,15 @@ class MainActivity : AppCompatActivity() {
     private var isRouting = false
     private var lastIndex = 0
     private var rout: RoutingResultModel? = null
+    private var activeMarker: Marker? = null
 
-    private val LOCATION_PERMISSION_REQUEST_CODE = 100
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
         requestLocationPermission()
+        setupRecyclerSearchPlaces()
     }
 
     override fun onResume() {
@@ -97,6 +100,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun longPressHelper(point: GeoPoint?): Boolean {
+                activeMarker?.let {
+                    it.closeInfoWindow()
+                    mMap?.overlays?.remove(it)
+                    mMap?.invalidate()
+                    activeMarker = null
+                }
+
                 point?.let {
                     viewModel.reverseGeoPoint(
                         Point(
@@ -128,10 +138,9 @@ class MainActivity : AppCompatActivity() {
                 waypoints.add(GeoPoint(it.latitude, it.longitude))
                 waypoints.add(GeoPoint(search.latitude!!, search.longitude!!))
 
-//                viewModel.sdkRouting(waypoints, this)
                 viewModel.routing(
                     arrayListOf(it.longitude, it.latitude),
-                    arrayListOf(search.longitude!!, search.latitude!!)
+                    arrayListOf(search.longitude, search.latitude)
                 )
             }
         }
@@ -166,7 +175,6 @@ class MainActivity : AppCompatActivity() {
                                 marker.position = GeoPoint(position.get(1), position.get(0))
                                 mMap?.overlays?.add(marker)
                             }
-
                     }
                 }
             }
@@ -190,12 +198,11 @@ class MainActivity : AppCompatActivity() {
                 mMap?.controller?.animateTo(
                     GeoPoint(location.latitude, location.longitude), 18.0, 1000, -location.bearing
                 )
-                location.speed?.let {
-                    binding.tvSpeed.visibility = View.VISIBLE
-                    binding.tvSpeed.text = getString(R.string.speed, it.toInt())
-                }
-                rout?.features?.firstOrNull()?.let { data ->
 
+                binding.tvSpeed.visibility = View.VISIBLE
+                binding.tvSpeed.text = getString(R.string.speed, location.speed.toInt())
+
+                rout?.features?.firstOrNull()?.let { data ->
 
                     val (stepIndex, index) = findClosestStep(
                         location, data.geometry.coordinates,
@@ -224,11 +231,10 @@ class MainActivity : AppCompatActivity() {
                                 binding.ivStepIcon.setImageResource(getManeuverImage(it.toInt()))
                             }
                         }
-                        step?.let {
-                            val remaining =
-                                distanceLeftInStep(data.geometry.coordinates, step, lastIndex)
-                            binding.tvDistance.text = formatDistance(remaining)
-                        }
+
+                        val remaining =
+                            distanceLeftInStep(data.geometry.coordinates, step, lastIndex)
+                        binding.tvDistance.text = formatDistance(remaining)
                     }
                 }
             }
@@ -251,6 +257,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 mMap.overlays.add(marker)
                 marker.showInfoWindow()
+                activeMarker = marker
             }
         }
     }
@@ -282,7 +289,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
+                Constants.LOCATION_PERMISSION_REQUEST_CODE
             )
         } else {
             viewModel.requestLocationUpdate()
@@ -296,7 +303,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+        if (requestCode == Constants.LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 viewModel.requestLocationUpdate()
             }
@@ -306,5 +313,25 @@ class MainActivity : AppCompatActivity() {
     private fun setupBottomSheet() {
         val behavior = BottomSheetBehavior.from(binding.layoutBottomSheetBehavior)
         behavior.setPeekHeight(this.dpToPx(200), false)
+    }
+
+    private fun setupRecyclerSearchPlaces() {
+        binding.rcSearchFilters.layoutManager =
+            LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
+
+        val adapter = SearchPlaceAdapter {
+            mMap?.let { map ->
+                viewModel.searchPlaces(it, RoutingHelper.createBondingBox(map))
+            }
+        }
+
+        adapter.updateAdapter(
+            arrayListOf(
+                SearchPlaceModel("Fuel", R.drawable.ic_fuel, "fuel station"),
+                SearchPlaceModel("Restaurant", R.drawable.ic_restaurant, "restaurant"),
+                SearchPlaceModel("Park", R.drawable.ic_park, "park")
+            )
+        )
+        binding.rcSearchFilters.adapter = adapter
     }
 }

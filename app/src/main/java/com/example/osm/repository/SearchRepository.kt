@@ -13,9 +13,12 @@ import javax.inject.Inject
 class SearchRepository @Inject constructor(
     private val searchService: SearchService
 ) : BaseApiResponse() {
-    fun getPlaces(query: String): Flow<NetworkResult<List<SearchResultModel>>> {
+    fun getPlaces(query: String, boundingBox: List<Double>? = null): Flow<NetworkResult<List<SearchResultModel>>> {
         return flow {
-            emit(safeApiCall { searchService.searchPlaces(query) })
+            val bbox = boundingBox?.let {
+                it.joinToString(",")
+            }
+            emit(safeApiCall { searchService.searchPlaces(query, boundingBox = bbox) })
         }
     }
 
