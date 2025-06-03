@@ -119,6 +119,6 @@ object RoutingHelper {
         val topLeft = Point(boundingBox.latNorth, boundingBox.lonWest)
         val bottomRight = Point(boundingBox.latSouth, boundingBox.lonEast)
 
-        return arrayListOf(topLeft.lat, topLeft.lng, bottomRight.lat, bottomRight.lng)
+        return arrayListOf(topLeft.lng, topLeft.lat, bottomRight.lng, bottomRight.lat)
     }
 }

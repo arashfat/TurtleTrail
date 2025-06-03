@@ -1,4 +1,4 @@
-package com.example.osm.ui.searcResult
+package com.example.osm.ui.search
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,18 +7,16 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.osm.databinding.FragmentSearchResultBinding
+import com.example.osm.databinding.FragmentSearchBinding
 import com.example.osm.model.SearchResultModel
 import com.example.osm.ui.main.MainViewModel
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SearchResultFragment: Fragment() {
+class SearchFragment: Fragment() {
     private val searches = arrayListOf<SearchResultModel>()
-    private var _binding: FragmentSearchResultBinding? = null
+    private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
     private val viewModel: MainViewModel by activityViewModels()
     var adapter: SearchAdapter? = null
@@ -27,7 +25,7 @@ class SearchResultFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSearchResultBinding.inflate(inflater, container, false)
+        _binding = FragmentSearchBinding.inflate(inflater, container, false)
         return binding.root
     }
 

@@ -1,4 +1,4 @@
-package com.example.osm.ui.searcResult
+package com.example.osm.ui.search
 
 import android.view.LayoutInflater
 import android.view.View

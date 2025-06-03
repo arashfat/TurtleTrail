@@ -13,6 +13,7 @@ interface SearchService {
         @Query("format") f: String = "jsonv2",
         @Query("countrycodes") code: String = "ir",
         @Query("viewbox") boundingBox: String? = null,
+        @Query("bounded") isBounded: Int = 0,
         @Query("limit") limit: Int = 10
     ): Response<List<SearchResultModel>>
 

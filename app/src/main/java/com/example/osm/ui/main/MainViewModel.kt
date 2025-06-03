@@ -40,6 +40,9 @@ class MainViewModel @Inject constructor(
     private val _locationUpdate = MutableLiveData<Location>()
     val locationUpdate: LiveData<Location> get() = _locationUpdate
 
+    var searchQuery: String = ""
+    val searchBox = arrayListOf<Double>()
+
     val searchOnClick = MutableLiveData<SearchResultModel>()
     fun searchPlaces(search: String, boundingBox: List<Double>? = null) = viewModelScope.launch {
         val result = searchRepository.getPlaces(search, boundingBox)

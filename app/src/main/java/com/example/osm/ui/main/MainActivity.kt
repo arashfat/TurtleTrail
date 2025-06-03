@@ -23,7 +23,8 @@ import com.example.osm.ui.main.adapter.SearchPlaceModel
 import com.example.osm.ui.mapUtils.getBoundingBox
 import com.example.osm.ui.routing.RoutingFragment
 import com.example.osm.ui.routing.RoutingViewModel
-import com.example.osm.ui.searcResult.SearchResultFragment
+import com.example.osm.ui.search.SearchFragment
+import com.example.osm.ui.search.SearchResultsFragment
 import com.example.osm.ui.summary.SummaryFragment
 import com.example.osm.utils.Constants
 import com.example.osm.utils.RoutingHelper
@@ -122,7 +123,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.edSearch.setOnClickListener {
             supportFragmentManager.beginTransaction()
-                .replace(binding.mainContainer.id, SearchResultFragment(), "search").commit()
+                .replace(binding.mainContainer.id, SearchFragment(), "search").commit()
         }
     }
 
@@ -321,7 +322,12 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = SearchPlaceAdapter {
             mMap?.let { map ->
-                viewModel.searchPlaces(it, RoutingHelper.createBondingBox(map))
+                viewModel.searchQuery = it
+                viewModel.searchBox.clear()
+                viewModel.searchBox.addAll(RoutingHelper.createBondingBox(map))
+                supportFragmentManager.beginTransaction().replace(
+                    R.id.bottom_sheet_container, SearchResultsFragment()
+                ).commit()
             }
         }
 

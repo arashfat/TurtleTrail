@@ -14,11 +14,18 @@ class SearchRepository @Inject constructor(
     private val searchService: SearchService
 ) : BaseApiResponse() {
     fun getPlaces(query: String, boundingBox: List<Double>? = null): Flow<NetworkResult<List<SearchResultModel>>> {
+        val isBounded = if (!boundingBox.isNullOrEmpty()) 1 else 0
         return flow {
             val bbox = boundingBox?.let {
                 it.joinToString(",")
             }
-            emit(safeApiCall { searchService.searchPlaces(query, boundingBox = bbox) })
+            emit(safeApiCall {
+                searchService.searchPlaces(
+                    query,
+                    boundingBox = bbox,
+                    isBounded = isBounded
+                )
+            })
         }
     }
 
